@@ -38,7 +38,10 @@ test("the gate stays shut until the talk is due, then wakes once, retries an hou
   const g1 = gate(mc, S, at("2026-10-04T17:00:00Z"), statePath);
   assert.equal(g1.wake, true); assert.equal(g1.attempt, 1);
   assert.match(g1.output, /^COACH TALK DUE: Health and fitness \(health\), 2026-10-04, 19:00 Europe\/Berlin/);
-  assert.match(g1.output, /Follow the coach recipe, section "Opening a talk"/);
+  assert.match(g1.output, /do not run godspeed sync or git pull/);
+  assert.match(g1.output, /## How to open it \(the coach recipe, section "Opening a talk"\)\nThe talk job wakes you/);
+  assert.match(g1.output, /answer exactly `\[SILENT\]`/);
+  assert.doesNotMatch(g1.output, /## Continuing a talk/, "only the opening section travels");
   assert.equal(gate(mc, S, at("2026-10-04T17:10:00Z"), statePath).wake, false, "not within the hour");
   assert.equal(gate(mc, S, at("2026-10-04T18:01:00Z"), statePath).attempt, 2);
   assert.equal(gate(mc, S, at("2026-10-04T19:02:00Z"), statePath).attempt, 3);

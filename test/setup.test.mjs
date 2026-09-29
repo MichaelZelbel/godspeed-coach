@@ -14,7 +14,7 @@ const BIN = path.join(ROOT, "bin", "godspeed-coach.mjs");
 test("scripts, prompt and the one-host rule", () => {
   assert.match(gateScript("/home/a/.local/bin/godspeed-coach", "/home/a/godspeed"), /exec "\/home\/a\/\.local\/bin\/godspeed-coach" gate --godspeed "\/home\/a\/godspeed"/);
   assert.match(tickScript("/b/godspeed-coach", "/m"), /exec "\/b\/godspeed-coach" tick --godspeed "\/m"/);
-  assert.match(TALK_PROMPT, /Opening a talk/);
+  assert.match(TALK_PROMPT, /ends with how to open it/);
   assert.equal(wantTick({ tick_host: "" }, "vps"), "register");
   assert.equal(wantTick({ tick_host: "vps" }, "laptop"), "other-host");
   assert.equal(telegramConfigured("", "TELEGRAM_BOT_TOKEN=1:a\n"), true);
