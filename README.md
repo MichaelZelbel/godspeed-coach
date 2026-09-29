@@ -40,9 +40,13 @@ half, it asks whether to make it smaller or drop it.
 
 ## Install
 
+As the account your assistant runs as, from inside your mission control folder:
+
 ```
-npx --yes github:MichaelZelbel/godspeed-coach setup
+curl -fsSL https://raw.githubusercontent.com/MichaelZelbel/godspeed-coach/main/install.sh | bash
 ```
+
+It uses whichever Node.js 22 or newer the computer has, including the one Hermes brings along.
 
 Then ask your assistant for your first area: "I want a weekly health talk on Sundays at seven."
 

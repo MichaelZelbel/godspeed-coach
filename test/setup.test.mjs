@@ -22,6 +22,19 @@ test("scripts, prompt and the one-host rule", () => {
   assert.match(claudeHookMerge("", '"/b/godspeed-coach" context --hook claude'), /UserPromptSubmit/);
 });
 
+test("the Linux launcher names the Node that ran setup; Windows keeps node", () => {
+  const [sh] = P.launchers("/home/ai/.godspeed-coach/app", "linux", "/home/ai/.hermes/tools/node-26.7.0-linux-x64/bin/node");
+  assert.equal(sh.body, '#!/bin/sh\nexec "/home/ai/.hermes/tools/node-26.7.0-linux-x64/bin/node" "/home/ai/.godspeed-coach/app/bin/godspeed-coach.mjs" "$@"\n');
+  assert.match(P.launchers("C:\\app", "win32")[0].body, /^#!\/bin\/sh\nexec node "C:\/app\/bin\/godspeed-coach\.mjs"/);
+});
+
+test("the one-line installer finds Hermes' own Node and reads questions from the terminal", () => {
+  const s = fs.readFileSync(path.join(ROOT, "install.sh"), "utf8");
+  assert.match(s, /\$HOME"\/\.hermes\/tools\/node-\*\/bin\/node/);
+  assert.match(s, /setup "\$@" < \/dev\/tty/);
+  assert.match(s, /codeload\.github\.com\/MichaelZelbel\/godspeed-coach/);
+});
+
 test("setup without Hermes: recipe, settings, command, hook, and it is repeatable", () => {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), "coach-setup-"));
   const mcDir = path.join(home, "godspeed"); fs.mkdirSync(path.join(mcDir, ".claude"), { recursive: true }); fs.writeFileSync(path.join(mcDir, "AGENTS.md"), "");
