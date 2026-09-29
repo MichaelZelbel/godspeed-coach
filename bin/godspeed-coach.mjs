@@ -6,7 +6,7 @@ import path from "node:path";
 import { findMissionControl, appHome } from "../lib/paths.mjs";
 import { now, localParts, addDays } from "../lib/clock.mjs";
 import { loadSettings, setSetting, DEFAULTS } from "../lib/settings.mjs";
-import { listAreas, findArea, isTalkDay } from "../lib/areas.mjs";
+import { listAreas, findArea, isTalkDay, addArea, setAreaField, nextTalkDay, AREA_FIELDS } from "../lib/areas.mjs";
 import { openTalk, readTalk, setTalkState, setFollowUp, addSaid, talkDates, talkFile } from "../lib/talks.mjs";
 import { addHabit, listHabits, findHabit, track, setStatus, stats, askedOn, answerOn } from "../lib/habits.mjs";
 import { readTable } from "../lib/auto.mjs";
@@ -92,6 +92,30 @@ const commands = {
     out(as.map((a) => `${a.slug}: ${a.title}, ${a.rhythmText} ${a.time}, ${a.style}, ${a.tone}, ${a.on ? `next talk ${next(a) || "none"}` : "paused"}`).join("\n") || "No areas yet.", as.map((a) => ({ slug: a.slug, title: a.title, next: next(a) })));
   },
   show() { const a = needArea(pos[0]); console.log(fs.readFileSync(a.file, "utf8")); },
+  area() {
+    const [sub, name, key, ...v] = pos;
+    if (sub === "add") {
+      // A new area starts tomorrow unless a date is given, so creating "Sundays at seven" on a
+      // Sunday evening never opens a talk fifteen minutes later by surprise.
+      try {
+        const a = addArea(mcDir, { slug: name, title: f.title, rhythm: f.rhythm, time: f.time || "19:00", starts: f.starts ? dateArg(f.starts) : addDays(today, 1), style: f.style || "compass", tone: f.tone || "gentle", serves: f.serves || "" });
+        saved(`area ${a.slug} added`);
+        const first = nextTalkDay(a, a.starts);
+        return out(`Added: ${a.title} (${a.slug}), ${a.rhythmText} at ${a.time}, ${a.style}, ${a.tone}. First talk: ${first || "none"}.`, { ok: true, area: a.slug, first });
+      } catch (e) { die(e.message); }
+    }
+    if (sub === "set") {
+      const a = needArea(name);
+      if (!key || !v.length) die(`godspeed-coach area set <area> <${AREA_FIELDS.join("|")}> <value>`);
+      try {
+        const b = setAreaField(a, key, v.join(" "));
+        saved(`area ${b.slug} ${key.toUpperCase()}`);
+        const first = nextTalkDay(b, today > (b.starts || today) ? today : b.starts || today);
+        return out(`Changed: ${b.title} ${key.toUpperCase()} = ${v.join(" ")}. ${b.on ? `Next talk: ${first || "none"}.` : "Paused: no talks until it is on again."}`, { ok: true, next: first });
+      } catch (e) { die(e.message); }
+    }
+    die("godspeed-coach area add <name> --title ... --rhythm ... | area set <area> <SETTING> <value>");
+  },
   brief() { const a = needArea(pos[0]); console.log(brief(mcDir, s, a, dateArg(f.date))); },
   gate() {
     pullQuietly(mcDir, syncMode);

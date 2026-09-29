@@ -54,6 +54,25 @@ test("talks: the gate, opening, his words, held", () => {
   } finally { delete process.env.COACH_APP; }
 });
 
+test("areas: add the first one in an empty mission control, change it, pause it", () => {
+  const mc = tmpMission({ "coach/settings.json": JSON.stringify({ timezone: "Europe/Berlin", git_sync: "off" }) });
+  const T = "2026-10-04T16:00:00Z"; // a Sunday, 18:00 Berlin
+  assert.equal(cli(mc, T, "area", "add", "health", "--title", "Health", "--rhythm", "weekly sunday", "--time", "19:00", "--style", "review").out,
+    "Added: Health (health), weekly sunday at 19:00, review, gentle. First talk: 2026-10-11.");
+  const text = fs.readFileSync(path.join(mc, "coach", "health", "area.md"), "utf8");
+  assert.match(text, /^AREA: health\nTITLE: Health\nRHYTHM: weekly sunday\nTIME: 19:00\nSTARTS: 2026-10-05\nSTATUS: on\nSTYLE: review\nTONE: gentle/);
+  assert.match(text, /## Preparation\n\nRead the last talk of this area/);
+  assert.equal(cli(mc, "2026-10-11T17:00:00Z", "gate").out.split("\n")[0], "COACH TALK DUE: Health (health), 2026-10-11, 19:00 Europe/Berlin");
+  const bad = cli(mc, T, "area", "add", "work", "--rhythm", "sometimes");
+  assert.equal(bad.code, 1); assert.match(bad.err, /"sometimes" is not a rhythm/);
+  assert.equal(cli(mc, T, "area", "add", "health", "--rhythm", "daily").code, 1, "no second health area");
+  assert.equal(cli(mc, T, "area", "set", "health", "rhythm", "weekly", "Wednesday").out, "Changed: Health RHYTHM = weekly Wednesday. Next talk: 2026-10-07.");
+  assert.equal(cli(mc, T, "area", "set", "health", "tone", "direct").out, "Changed: Health TONE = direct. Next talk: 2026-10-07.");
+  assert.equal(cli(mc, T, "area", "set", "health", "status", "paused").out, "Changed: Health STATUS = paused. Paused: no talks until it is on again.");
+  assert.match(cli(mc, T, "area", "set", "health", "colour", "blue").err, /settings are TITLE, RHYTHM, TIME, STARTS, STATUS, STYLE, TONE, SERVES/);
+  assert.match(cli(mc, T, "areas").out, /^health: Health, weekly wednesday 19:00, review, direct, paused$/);
+});
+
 test("the gate and context never fail loudly, even without a mission control", () => {
   const empty = fs.mkdtempSync(path.join(os.tmpdir(), "no-mc-"));
   const g = cli(empty, "2026-10-04T17:00:00Z", "gate");

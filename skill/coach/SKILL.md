@@ -101,13 +101,36 @@ so, never in the evening check and never on their own.
 and follow "Opening a talk" in this conversation (skip the `[SILENT]` rule). If a talk of that area
 is already open, continue it instead.
 
+## A new area
+
+"I want a weekly health talk on Sundays at seven." Whatever the request leaves open, ask once, in
+one message, and suggest a default for each so a one-word answer is enough:
+
+- **How often and when:** daily, weekly on a day, every two weeks, or monthly on a date; a time.
+- **Style:** review (it looks at what happened, the person's own records or the week's news, and
+  ends with one change) or compass (questions, and it ends with one direction). Health and money
+  usually suit review, relationships and "where am I going" usually suit compass.
+- **Tone:** gentle (curious, makes the next step smaller) or direct (names a slip plainly, once).
+
+Then one command, and confirm with its output line:
+
+    godspeed-coach area add <name> --title "<title>" --rhythm "<weekly sunday>" --time <19:00> --style <review|compass> --tone <gentle|direct>
+
+The first talk is tomorrow or later (`--starts <date>` for a specific day). If the person names what
+the talk should look at ("my running app", "my calendar") or something it must never do, add them to
+`coach/<area>/area.md` as `MAY READ:` and `LIMIT:` lines under the header, and say so in the same
+confirmation.
+
 ## Changing an area
 
 "Move the work talk to Thursday", "be more direct about money", "pause the relationships talk":
-edit the matching header line in `coach/<area>/area.md` (RHYTHM `weekly thursday`, TIME `20:00`,
-TONE `direct`, STATUS `paused`) and confirm in one line. A new area is a new folder with an
-`area.md`: ask him once which area, how often, which style (review: data and one change; compass:
-questions and one direction) and which tone, and copy the shape of an existing `area.md`.
+
+    godspeed-coach area set <area> RHYTHM "weekly thursday"
+    godspeed-coach area set <area> TIME 20:00
+    godspeed-coach area set <area> TONE direct
+    godspeed-coach area set <area> STATUS paused      (on, to start again)
+
+Confirm with the command's output line, which names the next talk.
 
 ## Never
 
