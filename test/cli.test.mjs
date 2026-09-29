@@ -49,7 +49,7 @@ test("talks: the gate, opening, his words, held", () => {
     assert.equal(cli(mc, "2026-10-04T17:20:00Z", "talk", "said", "health", "--words", "most evenings, about an hour").out, "Saved.");
     assert.equal(cli(mc, "2026-10-04T17:40:00Z", "talk", "held", "health").out, "Recorded: the Health and fitness talk of 2026-10-04 is held.");
     const rec = fs.readFileSync(path.join(mc, "coach", "health", "talks", "2026-10-04.md"), "utf8");
-    assert.match(rec, /STATE: held/); assert.match(rec, /## What he said\n- 19:20 most evenings, about an hour/);
+    assert.match(rec, /STATE: held/); assert.match(rec, /## What you said\n- 19:20 most evenings, about an hour/);
     assert.equal(cli(mc, "2026-10-04T17:45:00Z", "context").out, "");
   } finally { delete process.env.COACH_APP; }
 });
