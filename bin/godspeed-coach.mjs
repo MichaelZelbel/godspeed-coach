@@ -127,13 +127,13 @@ const commands = {
     const a = needArea(name);
     if (sub === "open") {
       const d = dateArg(f.date);
-      if (!f.opening) die('Give the opening: --opening "<what you are sending him>"');
+      if (!f.opening) die('Give the opening: --opening "<what you are sending them>"');
       const r = openTalk(a, d, { opening: f.opening, read: f.read || "" }, at);
       if (r.created) saved(`${a.slug} talk opened ${d}`);
       return out(r.created ? `Opened: ${path.relative(mcDir, r.file).replace(/\\/g, "/")}` : `Already open: ${path.relative(mcDir, r.file).replace(/\\/g, "/")} (kept the first opening)`, { ok: true, created: r.created, file: r.file });
     }
     if (sub === "said") {
-      if (!f.words) die('Give his words: --words "<what he said>"');
+      if (!f.words) die('Give their words: --words "<what they said>"');
       const d = openTalkDate(a);
       addSaid(a, d, `- ${localParts(at, s.timezone).hm} ${String(f.words).replace(/\s+/g, " ").trim()}`);
       saved(`${a.slug} talk ${d}`);
