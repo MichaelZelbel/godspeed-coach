@@ -1,5 +1,5 @@
 name: godspeed-coach
-version: "0.1.0"
+version: "0.1.1"
 description: >-
   Shows the model which coaching talk is waiting for a reply, tonight's habit question and the
   active habits, once per turn, before it reads the message (pre_llm_call). Prints nothing when

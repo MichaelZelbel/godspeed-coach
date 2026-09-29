@@ -76,7 +76,8 @@ test("the brief carries today's queued question, the last talk, habits and goals
   assert.match(b, /- age-healthy: Age healthy \(measure: sleep and runs\)/);
   assert.match(b, /PROGRESS head lifts adopted/);
   assert.doesNotMatch(b, /ATTENTION long noise/);
-  assert.match(b, /LIMIT|Limits, binding:\n- never diagnose/);
+  assert.match(b, /Limits, binding:\n- never diagnose/);
+  assert.ok(b.includes(`talk open health --godspeed "${mc.replace(/\\/g, "/")}" --opening`), "the command names its folder");
 });
 
 test("three unanswered talks in a row: the brief asks about the rhythm", () => {

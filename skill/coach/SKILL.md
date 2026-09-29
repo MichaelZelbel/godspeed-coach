@@ -31,8 +31,9 @@ full, the habits' week and the goals it serves.
    greeting formula, no praise, no sign-off, no link unless the one thing is a link. The area's
    tone: **gentle** is curious and warm and makes the next step smaller; **direct** names what
    happened plainly and asks what is really going on.
-4. Create the record BEFORE you answer:
-   `godspeed-coach talk open <area> --opening "<the opening, exactly>" --read "<what you read, short>"`
+4. Create the record BEFORE you answer, with the command line exactly as the brief prints it
+   (it carries `--godspeed <folder>`; keep that flag on every `godspeed-coach` command in this talk):
+   `godspeed-coach talk open <area> --godspeed <folder> --opening "<the opening, exactly>" --read "<what you read, short>"`
    If it says `Already open`, the opening went out on an earlier run: answer exactly `[SILENT]`.
 5. If you used the queued question, add a line `ASKED: <today>` directly under its heading in
    the area's `questions.md`.
