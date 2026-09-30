@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import path from "node:path";
 import test from "node:test";
-import { listAreas, findArea, isTalkDay, talkMoment, parseRhythm, readArea } from "../lib/areas.mjs";
+import { listAreas, findArea, isTalkDay, talkMoment, parseRhythm, readArea, rhythmWords } from "../lib/areas.mjs";
 import { tmpMission, area } from "./helpers.mjs";
 
 test("rhythm words", () => {
@@ -11,6 +11,12 @@ test("rhythm words", () => {
   assert.deepEqual(parseRhythm("daily"), { kind: "daily" });
   assert.equal(parseRhythm("monthly 31"), null);
   assert.equal(parseRhythm("sometimes"), null);
+  const said = (RHYTHM, time = "19:00") => rhythmWords({ rhythm: parseRhythm(RHYTHM), rhythmText: RHYTHM, time });
+  assert.equal(said("weekly sunday"), "every Sunday at 19:00");
+  assert.equal(said("every 2 weeks wed", "08:30"), "every 2 weeks on Wednesday at 08:30");
+  assert.equal(said("monthly 1"), "on the 1st of every month at 19:00");
+  assert.equal(said("monthly 12"), "on the 12th of every month at 19:00");
+  assert.equal(said("daily"), "every day at 19:00");
 });
 
 test("areas are folders with an area.md, and nothing else", () => {

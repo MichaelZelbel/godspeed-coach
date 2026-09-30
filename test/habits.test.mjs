@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { addHabit, listHabits, findHabit, track, answerOn, askedOn, dueOn, stats, verdict, setStatus, readHabit, parseDays } from "../lib/habits.mjs";
+import { addHabit, listHabits, findHabit, track, answerOn, askedOn, dueOn, stats, verdict, setStatus, readHabit, parseDays, daysWords } from "../lib/habits.mjs";
 import { addDays } from "../lib/clock.mjs";
 import { tmpMission, area } from "./helpers.mjs";
 
@@ -11,6 +11,9 @@ test("days words", () => {
   assert.equal(parseDays("daily"), "daily");
   assert.deepEqual(parseDays("Mon, Wed, Friday"), ["mon", "wed", "fri"]);
   assert.equal(parseDays("whenever"), null);
+  assert.equal(daysWords("daily"), "every day");
+  assert.equal(daysWords(["fri", "mon", "wed"]), "every Monday, Wednesday and Friday");
+  assert.equal(daysWords(["tue", "thu"], "de"), "jeden Dienstag und Donnerstag");
 });
 
 test("tracking twice counts once; a later no replaces done; asked never replaces an answer", () => {

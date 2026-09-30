@@ -37,7 +37,8 @@ test("the gate stays shut until the talk is due, then wakes once, retries an hou
   assert.deepEqual(gate(mc, S, at("2026-10-04T16:45:00Z"), statePath), { wake: false, output: NO_WAKE });
   const g1 = gate(mc, S, at("2026-10-04T17:00:00Z"), statePath);
   assert.equal(g1.wake, true); assert.equal(g1.attempt, 1);
-  assert.match(g1.output, /^COACH TALK DUE: Health and fitness \(health\), 2026-10-04, 19:00 Europe\/Berlin/);
+  assert.match(g1.output, /^COACH TALK DUE: Health and fitness \(id for commands: health\), 2026-10-04, 19:00 Europe\/Berlin\n/);
+  assert.match(g1.output, /\nStyle: review\. Tone: gentle\. Rhythm: every Sunday at 19:00\.\n/, "the rhythm in words, not as the setting");
   assert.match(g1.output, /do not run godspeed sync or git pull/);
   assert.match(g1.output, /## How to open it \(the coach recipe, section "Opening a talk"\)\nThe talk job wakes you/);
   assert.match(g1.output, /answer exactly `\[SILENT\]`/);
@@ -75,7 +76,7 @@ test("the brief carries today's queued question, the last talk, habits and goals
   assert.doesNotMatch(b, /next week's/);
   assert.match(b, /coach\/health\/talks\/2026-09-27\.md \(held\)/);
   assert.match(b, /Did you do the head lifts\?/);
-  assert.match(b, /Face-down head lifts \(daily\): last 7 days done 1, no 0, skip 0, unknown 5/);
+  assert.match(b, /Face-down head lifts \(every day\): last 7 days done 1, no 0, skip 0, unknown 5/);
   assert.match(b, /- age-healthy: Age healthy \(measure: sleep and runs\)/);
   assert.match(b, /PROGRESS head lifts adopted/);
   assert.doesNotMatch(b, /ATTENTION long noise/);
@@ -87,6 +88,6 @@ test("three unanswered talks in a row: the brief asks about the rhythm", () => {
   const { mc } = mission();
   const a = readArea(path.join(mc, "coach", "health"));
   for (const d of ["2026-10-04", "2026-10-11", "2026-10-18"]) { openTalk(a, d, {}, at(d + "T17:00:00Z")); setTalkState(a, d, "not-held"); }
-  assert.match(brief(mc, S, a, "2026-10-25"), /The last 3 Health and fitness talks got no answer/);
+  assert.ok(brief(mc, S, a, "2026-10-25").includes("\n## Rhythm\nThe last 3 Health and fitness talks got no answer. Instead of pushing on, this opening asks whether the rhythm still suits them, in one or two short sentences that make sense on their own: that the last 3 talks went unanswered, that the talk comes every Sunday at 19:00, and whether to keep it, move it to another day or time, have it less often, or pause it.\n"));
   assert.match(brief(mc, S, a, "2026-10-25"), /### 2026-10-04: tired after washing up/, "an unasked question moves to the next talk");
 });

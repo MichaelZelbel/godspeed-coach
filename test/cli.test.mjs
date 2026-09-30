@@ -30,7 +30,10 @@ test("habits: add, track by loose words, answer tonight's check, list", () => {
   assert.equal(cli(mc, T, "habit", "track", "head lifts", "--answer", "no", "--date", "yesterday").out, "Tracked: Face-down head lifts, 2026-09-28, no.");
   const bad = cli(mc, T, "habit", "track", "bought milk");
   assert.equal(bad.code, 1); assert.match(bad.err, /No habit matches "bought milk"\. Active habits: Face-down head lifts\./);
-  assert.equal(cli(mc, "2026-09-30T19:00:00Z", "tick").out, "Face-down head lifts today? Answer yes, no or skip.");
+  assert.equal(cli(mc, "2026-09-30T19:00:00Z", "tick").out, [
+    "From your coach: Face-down head lifts today? You planned this habit for every day, and nothing is tracked for today yet. You said it counts as done when: a few holds.",
+    `Reply "yes" if you did it, "no" if you didn't, or "skip" if today shouldn't count, for example because you were ill. No reply is fine: the day stays blank and I won't ask about it again.`,
+  ].join("\n"));
   assert.match(cli(mc, "2026-09-30T19:05:00Z", "context").out, /Habit check sent tonight/);
   assert.equal(cli(mc, "2026-09-30T19:06:00Z", "habit", "answer", "yes").out, "Tracked: Face-down head lifts done.");
   assert.match(cli(mc, T, "habit", "list").out, /^head-lifts: Face-down head lifts \(health, daily, active\)/);
@@ -45,7 +48,7 @@ test("talks: the gate, opening, his words, held", () => {
     assert.match(cli(mc, "2026-10-04T17:00:00Z", "gate").out, /^COACH TALK DUE: Health and fitness/);
     assert.equal(cli(mc, "2026-10-04T17:02:00Z", "talk", "open", "health", "--opening", "When does the tiredness come?").out, "Opened: coach/health/talks/2026-10-04.md");
     assert.equal(cli(mc, "2026-10-04T18:05:00Z", "gate").out, '{"wakeAgent": false}');
-    assert.match(cli(mc, "2026-10-04T17:10:00Z", "context").out, /Open talk: Health and fitness \(health\), opened 2026-10-04 19:02/);
+    assert.match(cli(mc, "2026-10-04T17:10:00Z", "context").out, /Open talk: Health and fitness \(id for commands: health\), opened today at 19:02/);
     assert.equal(cli(mc, "2026-10-04T17:20:00Z", "talk", "said", "health", "--words", "most evenings, about an hour").out, "Saved.");
     assert.equal(cli(mc, "2026-10-04T17:40:00Z", "talk", "held", "health").out, "Recorded: the Health and fitness talk of 2026-10-04 is held.");
     const rec = fs.readFileSync(path.join(mc, "coach", "health", "talks", "2026-10-04.md"), "utf8");
@@ -62,7 +65,7 @@ test("areas: add the first one in an empty mission control, change it, pause it"
   const text = fs.readFileSync(path.join(mc, "coach", "health", "area.md"), "utf8");
   assert.match(text, /^AREA: health\nTITLE: Health\nRHYTHM: weekly sunday\nTIME: 19:00\nSTARTS: 2026-10-05\nSTATUS: on\nSTYLE: review\nTONE: gentle/);
   assert.match(text, /## Preparation\n\nRead the last talk of this area/);
-  assert.equal(cli(mc, "2026-10-11T17:00:00Z", "gate").out.split("\n")[0], "COACH TALK DUE: Health (health), 2026-10-11, 19:00 Europe/Berlin");
+  assert.equal(cli(mc, "2026-10-11T17:00:00Z", "gate").out.split("\n")[0], "COACH TALK DUE: Health (id for commands: health), 2026-10-11, 19:00 Europe/Berlin");
   const bad = cli(mc, T, "area", "add", "work", "--rhythm", "sometimes");
   assert.equal(bad.code, 1); assert.match(bad.err, /"sometimes" is not a rhythm/);
   assert.equal(cli(mc, T, "area", "add", "health", "--rhythm", "daily").code, 1, "no second health area");

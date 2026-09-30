@@ -26,11 +26,13 @@ full, the habits' week and the goals it serves.
 2. Pick **one thing** and **one question**. If a question is queued for today, it is the question.
    If the brief's Rhythm section says the last three talks got no answer, the question is whether
    the rhythm still suits them.
-3. Write the opening: a few lines, at most about 600 characters. One thing they did not know or
-   that connects to what they said last time, then the one question. No headings, no lists, no
-   greeting formula, no praise, no sign-off, no link unless the one thing is a link. The area's
-   tone: **gentle** is curious and warm and makes the next step smaller; **direct** names what
-   happened plainly and asks what is really going on.
+3. Write the opening: a few lines, at most about 600 characters, that make sense to someone who
+   reads only this message, on a phone. It starts with where it comes from and which talk it is
+   ("From your coach, your weekly health talk:"), then one thing they did not know or that
+   connects to what they said last time, with the day in words ("on Monday you said"), then the
+   one question. No headings, no lists, no greeting formula, no praise, no sign-off, no link
+   unless the one thing is a link. The area's tone: **gentle** is curious and warm and makes the
+   next step smaller; **direct** names what happened plainly and asks what is really going on.
 4. Create the record BEFORE you answer, with the command line exactly as the brief prints it
    (it carries `--godspeed <folder>`; keep that flag on every `godspeed-coach` command in this talk):
    `godspeed-coach talk open <area> --godspeed <folder> --opening "<the opening, exactly>" --read "<what you read, short>"`
@@ -42,7 +44,7 @@ full, the habits' week and the goals it serves.
 ## Continuing a talk
 
 The [godspeed-coach] block shows an open talk; the message is about it (or answers the follow-up
-"Still up for the ... talk?").
+that starts "From your coach: yesterday at ... I opened your ... talk").
 
 1. Save their words first: `godspeed-coach talk said <area> --words "<their words, close to verbatim>"`.
 2. Answer like a person across the table: short, one question at a time, the area's tone. Listen
@@ -55,7 +57,8 @@ The [godspeed-coach] block shows an open talk; the message is about it (or answe
 
 ## Closing a talk
 
-When a decision forms (a change, an experiment, a direction), say it back in one line and ask:
+When a decision forms (a change, an experiment, a direction), say it back in a short sentence
+that makes sense on its own and ask:
 "So: stretching every evening, and the late coffee stops. Right?" Then, on their yes:
 
 1. A new habit only on that yes: `godspeed-coach habit add <area> <slug> --title "<title>" --done-means "<what counts as done>" --days <daily | mon,wed,fri> --agreed "talk <date>"`.
@@ -79,19 +82,23 @@ They say "track stretching", "did stretching", "stretching done", answer the eve
 - One habit: `godspeed-coach habit track "<their words>" --source <telegram | telegram-voice | desk | journal> --words "<verbatim>"`.
   Add `--answer no` or `--answer skip` when they say so, `--date yesterday` for yesterday.
 - The evening check: `godspeed-coach habit answer <yes|no|skip ...> --source <...> --words "<verbatim>"`, one answer per habit in the order the block lists them, or one for all.
-- Reply with one line built from the command's output, in their language: "Tracked: stretching,
-  done." Nothing else. Say "tracked", never "logged": people dictate, and speech recognition hears
-  "track" where it turns "log" into "look".
+- Reply with a short sentence that makes sense on its own, in their language, saying in plain
+  words what was tracked and for which day: "Tracked: stretching, done today." Never pass on the
+  command's output as it is: its dates are written for machines. Nothing else. Say "tracked",
+  never "logged": people dictate, and speech recognition hears "track" where it turns "log" into
+  "look".
 - A journal entry that names a habit is saved by the journal recipe first; then track it here too,
   with `--source journal`, and say nothing extra.
 - A voice message arrives as its transcript; read habit names generously.
-- If nothing matches, the command lists the active habits: ask which one, in one line.
+- If nothing matches, the command lists the active habits: ask which one they meant, in a short
+  sentence that makes sense on its own and names those habits.
 
 ## A new habit outside a talk
 
 "New habit: ten minutes of reading." If the request does not say what counts as done and on which
-days, ask both once, in one message. Then `habit add` and confirm in one line. If the command
-refuses because five are active, say which five and ask which one to pause or graduate first.
+days, ask both once, in one message. Then `habit add` and confirm in plain words, in a short
+sentence that makes sense on its own. If the command refuses because five are active, say which
+five and ask which one to pause or graduate first.
 
 Graduating and "make it smaller, or drop it?" are offered only inside a talk, when the brief says
 so, never in the evening check and never on their own.
@@ -105,8 +112,8 @@ is already open, continue it instead.
 ## A new area
 
 "I want a weekly health talk on Sundays at seven." Only the day and time must come from them; if
-those are missing, ask for them in one line. Everything else gets a default, named in the
-confirmation so they can change it with one sentence:
+those are missing, ask for them in a short sentence that makes sense on its own. Everything else
+gets a default, named in the confirmation so they can change it with one sentence:
 
 - **Style:** review (it looks at what happened, their own records or the week's news, and ends
   with one change) for health, money and work; compass (questions, and it ends with one direction)
@@ -114,7 +121,8 @@ confirmation so they can change it with one sentence:
 - **Tone:** gentle (curious, makes the next step smaller) unless they ask for direct (names a slip
   plainly, once).
 
-Then one command, and confirm with its output line in plain words:
+Then one command, and confirm in plain words what it set up and when the first talk is, never
+its output as it is:
 
     godspeed-coach area add <name> --title "<title>" --rhythm "<weekly sunday>" --time <19:00> --style <review|compass> --tone <gentle|direct>
 
@@ -133,7 +141,9 @@ confirmation.
     godspeed-coach area set <area> TONE direct
     godspeed-coach area set <area> STATUS paused      (on, to start again)
 
-Confirm with the command's output line, which names the next talk.
+Confirm in plain words what changed and when the next talk is (the command's output names it),
+never the output as it is: "The work talk is now every Thursday at 19:00, the next one this
+Thursday."
 
 ## Never
 

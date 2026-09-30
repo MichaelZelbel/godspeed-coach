@@ -5,12 +5,15 @@ messenger, remembers the last one, and helps you decide one thing. Habits you tr
 spoken line.** An add-on for [the kit](https://github.com/MichaelZelbel/teach-it-once-kit) from
 [*Teach It Once*](https://leanpub.com/teachitonce).
 
-> Sunday, 19:00. "On Monday you said washing up often leaves you tired. When it happens: how
-> often, how long, and does it come with any dizziness?"
+> Sunday, 19:00. "From your coach, your weekly health talk: on Monday you said washing up often
+> leaves you tired. When it happens: how often, how long, and does it come with any dizziness?"
 
 > Track head lifts.
 
-> 21:00. "Head lifts today? Answer yes, no or skip." Only when you have not said it yet.
+> 21:00. "From your coach: Face-down head lifts today? You planned this habit for every day, and
+> nothing is tracked for today yet. Reply "yes" if you did it, "no" if you didn't, or "skip" if
+> today shouldn't count, for example because you were ill. No reply is fine: the day stays blank
+> and I won't ask about it again." Only when you have not said it yet.
 
 ## Why it exists
 
