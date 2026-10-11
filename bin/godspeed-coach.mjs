@@ -15,8 +15,14 @@ import { gate, NO_WAKE } from "../lib/gate.mjs";
 import { dueTick } from "../lib/tick.mjs";
 import { contextBlock } from "../lib/context.mjs";
 import { commitCoach, syncInBackground, pullQuietly } from "../lib/sync.mjs";
+import { decodeArgv, readTextFile, restoreShellEnv, startedFromGitBash, gitBashPath, LAUNCHER_ENV, CMDLINE_ENV } from "../lib/argv.mjs";
 
 const FLAGS = new Set(["json", "yes", "no-hermes", "no-claude", "all"]);
+// The values that name a file or folder. From Git Bash these are turned into Windows paths;
+// the person's words never are (lib/argv.mjs).
+const PATH_FLAGS = ["godspeed", "words-file", "opening-file", "extra-skills-dir", "daily-table"];
+// Free text that may run over several lines, and the flag that takes it from a file instead.
+const TEXT_FILES = [["words-file", "words"], ["opening-file", "opening"]];
 function parseArgs(argv) {
   const pos = []; const f = {};
   for (let i = 0; i < argv.length; i++) {
@@ -31,7 +37,14 @@ function parseArgs(argv) {
   return { pos, f };
 }
 
-const [cmd = "help", ...rest] = process.argv.slice(2);
+// The launchers say how they handed the arguments over (lib/argv.mjs). The markers are read once
+// and taken out of the environment, so a program this one starts (the background sync) never
+// mistakes itself for something the .cmd launcher started.
+const launched = decodeArgv(process.argv.slice(2), process.env);
+const fromGitBash = startedFromGitBash(process.env);
+delete process.env[LAUNCHER_ENV]; delete process.env[CMDLINE_ENV];
+restoreShellEnv(process.env);
+const [cmd = "help", ...rest] = launched.argv;
 const { pos, f, error: argError } = parseArgs(rest);
 // These three run inside other programs (before every turn, and on the schedule). A broken coach
 // never breaks the assistant and never sends an error into his chat.
@@ -42,7 +55,16 @@ function die(msg) {
   if (QUIET) process.exit(0);
   console.error(msg); process.exit(1);
 }
+if (launched.error) die(launched.error);
 if (argError) die(argError);
+if (fromGitBash) for (const k of PATH_FLAGS) if (typeof f[k] === "string") f[k] = gitBashPath(f[k]);
+// Words or an opening that hold a line break or a quote travel safest in a file: no shell reads a
+// file's contents, so nothing on the way can cut or change them.
+for (const [flag, key] of TEXT_FILES) {
+  if (f[flag] === undefined) continue;
+  if (f[key] !== undefined) die(`Give the ${key} once: either --${key} or --${flag}, not both.`);
+  try { f[key] = readTextFile(f[flag], key); } catch (e) { die(e.message); }
+}
 
 const mcDir = findMissionControl({ arg: f.godspeed });
 if (!mcDir && !["help", "setup"].includes(cmd)) die("Could not find your mission control folder. Run this from inside it, or add --godspeed <folder>.");
