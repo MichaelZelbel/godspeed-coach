@@ -51,6 +51,13 @@ curl -fsSL https://raw.githubusercontent.com/MichaelZelbel/godspeed-coach/main/i
 
 It uses whichever Node.js 22 or newer the computer has, including the one Hermes brings along.
 
+On Windows, setup also writes a PowerShell launcher next to the command, so a talk's opening and
+your words reach the coach exactly as given, line breaks, quotes and umlauts included. cmd.exe
+cannot carry a line break (it stops reading at the first one and drops the rest), so a command
+that reaches the coach cut short through it is refused, never half saved. Where PowerShell is set
+to run no scripts at all, setup says so and leaves that launcher out; text that runs over several
+lines then goes in with `--words-file` or `--opening-file`.
+
 Then ask your assistant for your first area: "I want a weekly health talk on Sundays at seven."
 
 ## Use
@@ -65,6 +72,10 @@ godspeed-coach habit list                     # --all for paused and graduated o
 godspeed-coach habits week                    # the last seven days of each habit
 godspeed-coach talk state health              # the last five health talks and how they went
 godspeed-coach config show                    # time zone, language, habit check time, cap
+
+# words or an opening that run over several lines, from any shell: put them in a file first
+godspeed-coach talk said health --words-file words.txt
+godspeed-coach talk open health --opening-file opening.txt --read "the week's runs"
 ```
 
 ## Honest limits
