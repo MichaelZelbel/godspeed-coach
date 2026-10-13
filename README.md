@@ -30,7 +30,8 @@ is left out, as if the habit had not been planned that day.
 
 A habit belongs to one area, and only that area's talk offers to graduate it or make it smaller.
 Other talks may look at it too: your walk to work can matter to a health talk and to a psychology
-talk alike.
+talk alike. So that two talks do not go over the same thing every week, a talk never opens with
+something another talk raised in the last seven days.
 
 ## What it is
 

@@ -1,13 +1,15 @@
 // Several talks may look at one habit (Michael's decision of 13 October 2026: his headache tracker
 // matters to a health talk and a planned psychology talk alike). A habit names the OTHER areas whose
 // talk may also look at it in one header line, "READ BY: psychology"; its own area always does. The
-// worry that comes with it, two talks going over the same thing every week, is answered by focus.
+// worry that comes with it, two talks going over the same thing every week, is answered by focus:
+// the brief lists what other talks raised in the last seven days, and the opening never starts there.
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 import { addHabit, listHabits, readHabit, track, setHabitReader, habitReadersWords } from "../lib/habits.mjs";
 import { readArea } from "../lib/areas.mjs";
+import { openTalk, setTalkState } from "../lib/talks.mjs";
 import { brief } from "../lib/brief.mjs";
 import { addDays } from "../lib/clock.mjs";
 import { tmpMission, area, S } from "./helpers.mjs";
@@ -19,6 +21,7 @@ const mission = () => tmpMission({
   "coach/sleep/area.md": NO_TALK("sleep", "Sleep"),
 });
 const walk = (mc, over = {}) => addHabit(mc, { area: "health", slug: "walk-to-work", title: "Walk to work and back", doneMeans: "both ways on foot", days: "daily", ...over }, over.today || "2026-10-01");
+const at = (iso) => new Date(iso);
 
 test("a habit names other talks in one READ BY line; nothing else in the file changes", () => {
   const mc = mission();
@@ -120,10 +123,53 @@ test("the talk brief lists another area's habit that names it, marked as that ar
   assert.match(only, /## Habits in this area\n- Walk to work and back \(a Health and fitness habit, every day\)/);
 });
 
+test("the brief lists what other talks raised in the last seven days: day, opening, what changed", () => {
+  const mc = mission();
+  const health = readArea(path.join(mc, "coach", "health"));
+  const psych = readArea(path.join(mc, "coach", "psychology"));
+  const record = (a, ymd, opening, changed) => {
+    openTalk(a, ymd, { opening }, at(ymd + "T17:00:00Z"));
+    if (changed !== undefined) {
+      const f = path.join(a.dir, "talks", `${ymd}.md`);
+      fs.writeFileSync(f, fs.readFileSync(f, "utf8").replace("## What changed\n", `## What changed\n${changed}\n`));
+      setTalkState(a, ymd, "held");
+    }
+  };
+  record(health, "2026-10-03", "From your coach, your weekly health talk: too old to list.");
+  record(health, "2026-10-04", "From your coach, your weekly health talk: on Monday you said the headaches come after long screen days. Which days were they this week?", "- a ten minute walk at lunch\n- habit started: Walk to work and back");
+  record(health, "2026-10-10", "From your coach: " + "x".repeat(400));
+  record(health, "2026-10-12", "From your coach: tomorrow's talk, after this brief's day.");
+  record(psych, "2026-10-09", "From your coach, your psychology talk: its own talk, never listed in its own brief.");
+  const b = brief(mc, S, psych, "2026-10-11");
+  const section = b.split("## Raised in other talks this week\n")[1].split("\n\n")[0];
+  assert.equal(section, [
+    "Another talk already raised these with them. The opening never starts with any of them: pick another thing. If they bring one up themselves, talk about it from this talk's own subject.",
+    '- The Health and fitness talk on 4 October opened with: "From your coach, your weekly health talk: on Monday you said the headaches come after long screen days. Which days were they this week?" What changed: a ten minute walk at lunch; habit started: Walk to work and back.',
+    `- The Health and fitness talk yesterday opened with: "From your coach: ${"x".repeat(220)}..."`,
+  ].join("\n"), "eight days back at most, nothing after the brief's day, never its own area's talks");
+  // The health brief on the same day sees the psychology talk, and only it.
+  const h = brief(mc, S, health, "2026-10-11");
+  assert.match(h, /## Raised in other talks this week\n.*\n- The Psychology talk on Friday opened with: "From your coach, your psychology talk: its own talk, never listed in its own brief\."$/m);
+  // A talk earlier the same day counts.
+  record(psych, "2026-10-11", "From your coach, your psychology talk: earlier today.");
+  assert.match(brief(mc, S, health, "2026-10-11"), /^- The Psychology talk today opened with: "From your coach, your psychology talk: earlier today\."$/m);
+});
+
+test("nothing raised elsewhere: the section says None.", () => {
+  const mc = tmpMission({ "coach/health/area.md": area() });
+  const b = brief(mc, S, readArea(path.join(mc, "coach", "health")), "2026-10-11");
+  assert.match(b, /\n## Raised in other talks this week\nNone\.\n/);
+  // It sits after the last talk and before the habits.
+  assert.ok(b.indexOf("## The last talk") < b.indexOf("## Raised in other talks this week"));
+  assert.ok(b.indexOf("## Raised in other talks this week") < b.indexOf("## Habits in this area"));
+});
+
 const read = (rel) => fs.readFileSync(new URL(`../${rel}`, import.meta.url), "utf8").replace(/\r/g, "").replace(/\s+/g, " ");
 
-test("the recipe: habit read-by in their words", () => {
+test("the recipe: the opening never starts with what another talk raised, and habit read-by in their words", () => {
   const text = read("skill/coach/SKILL.md");
+  const opening = text.split("## Opening a talk")[1].split("## Continuing a talk")[0];
+  assert.match(opening, /The one thing is never something the brief lists under "Raised in other talks this week": another talk already raised it, so pick another\. If they bring it up themselves in this talk, talk about it from this talk's own subject\./);
   assert.match(text, /"The psychology talk may also look at my walk to work habit"/);
   assert.match(text, /godspeed-coach habit read-by "<the habit>" <area>/);
   assert.match(text, /godspeed-coach habit read-by "<the habit>" <area> --remove/);
