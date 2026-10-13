@@ -28,6 +28,10 @@ nothing. After six weeks of mostly done, the talk offers to graduate the habit. 
 half, it asks whether to make it smaller or drop it. A day you answer "skip" counts neither way: it
 is left out, as if the habit had not been planned that day.
 
+A habit belongs to one area, and only that area's talk offers to graduate it or make it smaller.
+Other talks may look at it too: your walk to work can matter to a health talk and to a psychology
+talk alike.
+
 ## What it is
 
 - **One folder per area** under `coach/` in your mission control: `area.md` (rhythm, time,
@@ -74,6 +78,8 @@ godspeed-coach habit add health head-lifts --title "Face-down head lifts" --done
 godspeed-coach habit track "did head lifts"   # --answer no|skip, --date yesterday
 godspeed-coach habit answer yes no            # tonight's check, in the order it asked
 godspeed-coach habit list                     # --all for paused and graduated ones too
+godspeed-coach habit read-by "walk to work" psychology            # another talk may look at it too
+godspeed-coach habit read-by "walk to work" psychology --remove   # --remove takes it back
 godspeed-coach habits week                    # the last seven days of each habit
 godspeed-coach talk state health              # the last five health talks and how they went
 godspeed-coach config show                    # time zone, language, habit check time, cap
