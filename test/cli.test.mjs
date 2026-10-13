@@ -211,3 +211,12 @@ test("areas: an area with no talk takes what it may read and its limits, and kee
   assert.match(text, /\nMAY READ: my sleep tracker\nLIMIT: never suggest sleeping pills\n/);
   assert.match(text, /^RHYTHM: weekly sunday$/m);
 });
+
+test('progress replies use singular days and completions, and include the actual habit status',()=>{
+ const mc=mission(),at='2026-10-13T12:00:00Z';
+ cli(mc,at,'habit','add','health','reading','--title','Reading','--days','daily');
+ const done=JSON.parse(cli(mc,at,'habit','track','reading','--json').out);
+ assert.equal(done.reply,'Reading: 1 completed day altogether, 1 completion in this run.');assert.equal(done.progressCard.status,'active');
+ const paused=JSON.parse(cli(mc,at,'habit','pause','reading','--json').out);assert.equal(paused.progressCard.status,'paused');
+ const shown=JSON.parse(cli(mc,at,'habit','progress','reading','--json').out);assert.match(shown.reply,/1 completed day altogether/);assert.equal(shown.progressCard.status,'paused');
+});
