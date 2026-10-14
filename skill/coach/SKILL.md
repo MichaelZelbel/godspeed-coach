@@ -58,7 +58,9 @@ talk may look at) and the goals it serves.
 ## Continuing a talk
 
 The [godspeed-coach] block shows an open talk; the message is about it (or answers the follow-up
-that starts "From your coach: yesterday at ... I opened your ... talk").
+that starts "From your coach: yesterday at ... I opened your ... talk"). A message that asks for a
+talk of another area ("can we do the psychology talk now?") is not about the open talk: follow "A
+talk they start themselves".
 
 1. Save their words first: `godspeed-coach talk said <area> --words "<their words, close to verbatim>"`.
 2. Answer like a person across the table: short, one question at a time, the area's tone. Listen
@@ -156,7 +158,8 @@ missed day.
 
 "Let's do the health talk now", "Können wir über Arbeit reden?": run `godspeed-coach brief <area>`
 and follow "Opening a talk" in this conversation (skip the `[SILENT]` rule). If a talk of that area
-is already open, continue it instead.
+is already open, continue it instead. This holds while a talk of another area is open: that talk
+stays open as it is, and the request is never saved with `talk said` as an answer to it.
 
 ## A new area
 
