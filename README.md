@@ -45,7 +45,11 @@ something another talk raised in the last seven days.
   minutes whether a talk is due and starts the model only then. `coach-tick` sends the evening
   habit check and one follow-up for an unanswered talk, and never uses a model.
 - **A Hermes plugin and a Claude Code hook** that show the open talk and tonight's habit question
-  before every turn, so your answer lands in the right place wherever you type it.
+  before every turn, so your answer lands in the right place wherever you type it. An open talk
+  comes with its opening and what was prepared for it, so it goes on without looking anything up.
+- **Your goal research, when there is some.** If your mission control keeps research next to a
+  goal the area serves (`goals/research/<goal>/brief.md`), the talk's brief carries what it found,
+  and the talk starts from that instead of from a to-do list.
 
 ## Install
 
@@ -83,11 +87,12 @@ godspeed-coach habit read-by "walk to work" psychology            # another talk
 godspeed-coach habit read-by "walk to work" psychology --remove   # --remove takes it back
 godspeed-coach habits week                    # the last seven days of each habit
 godspeed-coach talk state health              # the last five health talks and how they went
+godspeed-coach talk said health --words "first message" --words "second message"   # one --words per message
 godspeed-coach config show                    # time zone, language, habit check time, cap
 
 # words or an opening that run over several lines, from any shell: put them in a file first
 godspeed-coach talk said health --words-file words.txt
-godspeed-coach talk open health --opening-file opening.txt --read "the week's runs"
+godspeed-coach talk open health --opening-file opening.txt --prepared-file prepared.txt --read "the week's runs"
 ```
 
 ## Honest limits

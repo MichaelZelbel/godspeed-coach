@@ -21,21 +21,23 @@ import { decodeArgv, readTextFile, restoreShellEnv, startedFromGitBash, gitBashP
 const FLAGS = new Set(["json", "yes", "no-hermes", "no-claude", "all", "remove"]);
 // The values that name a file or folder. From Git Bash these are turned into Windows paths;
 // the person's words never are (lib/argv.mjs).
-const PATH_FLAGS = ["godspeed", "words-file", "opening-file", "extra-skills-dir", "daily-table"];
+const PATH_FLAGS = ["godspeed", "words-file", "opening-file", "prepared-file", "extra-skills-dir", "daily-table"];
 // Free text that may run over several lines, and the flag that takes it from a file instead.
-const TEXT_FILES = [["words-file", "words"], ["opening-file", "opening"]];
+const TEXT_FILES = [["words-file", "words"], ["opening-file", "opening"], ["prepared-file", "prepared"]];
+// A flag given more than once keeps its last value in f, as always, and every value in all: "talk
+// said" saves each --words (or --words-file) as a message of its own.
 function parseArgs(argv) {
-  const pos = []; const f = {};
+  const pos = []; const f = {}; const all = {};
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (!a.startsWith("--")) { pos.push(a); continue; }
     const k = a.slice(2);
     if (FLAGS.has(k)) { f[k] = true; continue; }
     const next = argv[i + 1];
-    if (next === undefined || next.startsWith("--")) return { pos, f, error: `--${k} needs a value.` };
-    f[k] = next; i++;
+    if (next === undefined || next.startsWith("--")) return { pos, f, all, error: `--${k} needs a value.` };
+    f[k] = next; (all[k] ||= []).push(next); i++;
   }
-  return { pos, f };
+  return { pos, f, all };
 }
 
 // The launchers say how they handed the arguments over (lib/argv.mjs). The markers are read once
@@ -46,7 +48,7 @@ const fromGitBash = startedFromGitBash(process.env);
 delete process.env[LAUNCHER_ENV]; delete process.env[CMDLINE_ENV];
 restoreShellEnv(process.env);
 const [cmd = "help", ...rest] = launched.argv;
-const { pos, f, error: argError } = parseArgs(rest);
+const { pos, f, all, error: argError } = parseArgs(rest);
 // These three run inside other programs (before every turn, and on the schedule). A broken coach
 // never breaks the assistant and never sends an error into his chat.
 const QUIET = ["context", "tick", "gate"].includes(cmd);
@@ -58,13 +60,13 @@ function die(msg) {
 }
 if (launched.error) die(launched.error);
 if (argError) die(argError);
-if (fromGitBash) for (const k of PATH_FLAGS) if (typeof f[k] === "string") f[k] = gitBashPath(f[k]);
+if (fromGitBash) for (const k of PATH_FLAGS) if (typeof f[k] === "string") { f[k] = gitBashPath(f[k]); if (all[k]) all[k] = all[k].map((p) => gitBashPath(p)); }
 // Words or an opening that hold a line break or a quote travel safest in a file: no shell reads a
 // file's contents, so nothing on the way can cut or change them.
 for (const [flag, key] of TEXT_FILES) {
   if (f[flag] === undefined) continue;
   if (f[key] !== undefined) die(`Give the ${key} once: either --${key} or --${flag}, not both.`);
-  try { f[key] = readTextFile(f[flag], key); } catch (e) { die(e.message); }
+  try { all[key] = all[flag].map((file) => readTextFile(file, key)); f[key] = all[key].at(-1); } catch (e) { die(e.message); }
 }
 
 const mcDir = findMissionControl({ arg: f.godspeed });
@@ -192,16 +194,20 @@ const commands = {
     if (sub === "open") {
       const d = dateArg(f.date);
       if (!f.opening) die('Give the opening: --opening "<what you are sending them>"');
-      const r = openTalk(a, d, { opening: f.opening, read: f.read || "" }, at);
+      const r = openTalk(a, d, { opening: f.opening, read: f.read || "", prepared: f.prepared || "" }, at);
       if (r.created) saved(`${a.slug} talk opened ${d}`);
       return out(r.created ? `Opened: ${path.relative(mcDir, r.file).replace(/\\/g, "/")}` : `Already open: ${path.relative(mcDir, r.file).replace(/\\/g, "/")} (kept the first opening)`, { ok: true, created: r.created, file: r.file });
     }
     if (sub === "said") {
-      if (!f.words) die('Give their words: --words "<what they said>"');
+      // One --words per message: where commands show on their screen, the whole talk is saved in
+      // one command at its close, each message on a line of its own.
+      const said = (all.words || []).map((w) => String(w).replace(/\s+/g, " ").trim()).filter(Boolean);
+      if (!said.length) die('Give their words: --words "<what they said>", one --words per message');
       const d = openTalkDate(a);
-      addSaid(a, d, `- ${localParts(at, s.timezone).hm} ${String(f.words).replace(/\s+/g, " ").trim()}`);
+      const hm = localParts(at, s.timezone).hm;
+      addSaid(a, d, said.map((w) => `- ${hm} ${w}`));
       saved(`${a.slug} talk ${d}`);
-      return out("Saved.", { ok: true, date: d });
+      return out(said.length === 1 ? "Saved." : `Saved ${said.length} messages.`, { ok: true, date: d, saved: said.length });
     }
     if (sub === "held" || sub === "not-held") {
       const d = f.date ? dateArg(f.date) : (talkDates(a).at(-1) || die(`No ${a.title} talk exists yet.`));
