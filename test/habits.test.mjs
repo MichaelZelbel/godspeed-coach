@@ -187,7 +187,7 @@ test("the coach recipe no longer claims messages that start with track", () => {
   // Hermes refuses a recipe whose description is longer than 1024 characters: its own review could
   // not patch this one on 15 October 2026 and replaced the description with a short one instead.
   assert.ok(description.length < 1000, `the description is ${description.length} characters`);
-  for (const trigger of ["COACH TALK DUE", "[godspeed-coach] block shows an open talk", "yes / no / skip", "delete the last head lifts", "journal entry", "pause, graduate or drop", "a weekly health talk on Sundays at seven", "let's do the health talk now", "name any coach area", "day, time, tone or rhythm", "may look at or must never do, or take that back", "my sleep tracker", "must never suggest buying anything", "no longer needs my sleep tracker", "my walk to work habit"]) assert.ok(description.includes(trigger), trigger);
+  for (const trigger of ["COACH TALK DUE", "[godspeed-coach] block shows an open talk", "yes / no / skip", "delete the last head lifts", "journal entry", "pause, graduate or drop", "a weekly health talk on Sundays at seven", "let's do the health talk now", "name any coach area", "day, time, tone or rhythm", "may look at or must never do, or take that back", "The health talk may also look at my sleep tracker", "The health talk must never suggest buying anything", "The health talk no longer needs my sleep tracker", "The psychology talk may also look at my walk to work habit"]) assert.ok(description.includes(trigger), trigger);
   assert.match(text, /"Track stretching" means "did stretching"/);
   assert.match(text, /godspeed-coach habit untrack/);
 });
