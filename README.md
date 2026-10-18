@@ -64,13 +64,25 @@ something another talk raised in the last seven days.
 
 ## Install
 
-As the account your assistant runs as, from inside your mission control folder:
+Godspeed Mission Control brings this add-on with it: its installers put the `godspeed-coach`
+command next to its other commands, copy the recipe into your skills folder and wire the Hermes
+plugin and the two scheduled jobs. There is nothing more to install.
+
+To add it to a mission control folder of your own by hand, run its setup from a copy of Godspeed
+Mission Control, as the account your assistant runs as:
 
 ```
-curl -fsSL https://raw.githubusercontent.com/MichaelZelbel/godspeed-coach/main/install.sh | bash
+git clone --depth 1 https://github.com/MichaelZelbel/godspeed-mission-control.git
+node godspeed-mission-control/third-party/addons/godspeed-coach/bin/godspeed-coach.mjs setup --godspeed <your mission control folder>
 ```
 
-It uses whichever Node.js 22 or newer the computer has, including the one Hermes brings along.
+> Assistant: run that setup line with `--godspeed <this mission control folder>` and pass its
+> questions to the person.
+
+Any folder that holds this add-on, the one this README is in, works the same way: run
+`node bin/godspeed-coach.mjs setup --godspeed <your mission control folder>` inside it, and it
+installs the copy that folder holds. You need Node.js 22 or newer; the one Hermes brings along
+will do.
 
 On Windows, setup also writes a PowerShell launcher next to the command, so a talk's opening and
 your words reach the coach exactly as given, line breaks, quotes and umlauts included. cmd.exe
@@ -116,3 +128,15 @@ godspeed-coach talk open health --opening-file opening.txt --prepared-file prepa
 - The coach never diagnoses, never tells you to see a doctor, never buys, books, pays or contacts
   anyone for you. Each area can add its own limits.
 - Five active habits at most, by design. More than that is a list, not a habit.
+
+## For the maintainer
+
+This repository is where the add-on is developed, and it is private, so the line below works
+only with access to it. Godspeed Mission Control carries a copy at
+`third-party/addons/godspeed-coach/`, and changes go both ways between the two.
+
+```
+npx --yes github:MichaelZelbel/godspeed-coach setup --godspeed <your mission control folder>
+```
+
+Tests: `npm test`, and `npm run test:hermes` for the Hermes plugin (Python 3).

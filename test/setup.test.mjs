@@ -70,3 +70,16 @@ test("the Hermes plugin compiles", () => {
   const r = spawnSync(py, ["-c", `import ast,sys; ast.parse(open(sys.argv[1],encoding="utf-8").read())`, path.join(ROOT, "hermes", "plugin", "godspeed-coach", "__init__.py")], { encoding: "utf8" });
   assert.equal(r.status, 0, r.stderr);
 });
+
+// This repository is private: a stranger who reads the README gets the coach with Godspeed
+// Mission Control, which is public. Only the maintainer's note at the end names this repository.
+test("the README sends a stranger to Godspeed Mission Control, never to this private repository", () => {
+  const readme = fs.readFileSync(path.join(ROOT, "README.md"), "utf8");
+  const [forReaders, forMaintainer = ""] = readme.split("\n## For the maintainer\n");
+  assert.doesNotMatch(forReaders, /MichaelZelbel\/godspeed-coach|teach-it-once-kit/);
+  assert.match(forReaders, /^git clone --depth 1 https:\/\/github\.com\/MichaelZelbel\/godspeed-mission-control\.git$/m);
+  assert.match(forReaders, /^node godspeed-mission-control\/third-party\/addons\/godspeed-coach\/bin\/godspeed-coach\.mjs setup --godspeed <your mission control folder>$/m);
+  assert.match(forMaintainer, /^npx --yes github:MichaelZelbel\/godspeed-coach setup/m);
+  const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
+  assert.deepEqual(pkg.repository, { type: "git", url: "https://github.com/MichaelZelbel/godspeed-mission-control.git", directory: "third-party/addons/godspeed-coach" });
+});
