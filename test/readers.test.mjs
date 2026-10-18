@@ -1,4 +1,4 @@
-// Several talks may look at one habit (Michael's decision of 13 October 2026: his headache tracker
+// Several talks may look at one habit (the decision of 13 October 2026: a headache tracker
 // matters to a health talk and a planned psychology talk alike). A habit names the OTHER areas whose
 // talk may also look at it in one header line, "READ BY: psychology"; its own area always does. The
 // worry that comes with it, two talks going over the same thing every week, is answered by focus:

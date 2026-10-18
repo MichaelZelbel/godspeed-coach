@@ -108,7 +108,7 @@ def on_progress_reply(**kwargs):
 
 
 def on_progress_transform(**kwargs):
-    """Compose with Michael's optional voice filter without relying on plugin load order.
+    """Compose with the owner's optional voice filter without relying on plugin load order.
 
     This small named module is an explicit integration API, not Hermes manager introspection.
     mc-voice registers its transformer and calls append after repairing the text. Standalone

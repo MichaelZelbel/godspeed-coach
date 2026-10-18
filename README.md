@@ -2,7 +2,7 @@
 
 **Pick an area of your life, a day and a time. Your mission control opens the talk on your
 messenger, remembers the last one, and helps you decide one thing. Habits you track in one
-spoken line.** An add-on for [the kit](https://github.com/MichaelZelbel/teach-it-once-kit) from
+spoken line.** An add-on for [Godspeed Mission Control](https://github.com/MichaelZelbel/godspeed-mission-control) from
 [*Teach It Once*](https://leanpub.com/teachitonce).
 
 > Sunday, 19:00. "From your coach, your weekly health talk: on Monday you said washing up often
