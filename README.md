@@ -55,7 +55,10 @@ something another talk raised in the last seven days.
   (`STATE: ready`, a section "The opening" and a section "Talk card"), the talk opens with that
   opening as written, and every interface carries its talk card while the talk is open, with the
   file behind it for depth. `godspeed-coach prep-due` tells that job which coming talks still need it,
-  and which were prepared more than 48 hours before they start and need it again.
+  and which were prepared more than 48 hours before they start and need it again;
+  `godspeed-coach prep-check` says whether one talk's file is ready. In Godspeed Mission Control the
+  routine "Coaching talk preparation" is that job: every night it prepares each talk of the next day
+  with the coach-prep recipe.
 
 ## Install
 
@@ -95,6 +98,7 @@ godspeed-coach habits week                    # the last seven days of each habi
 godspeed-coach talk state health              # the last five health talks and how they went
 godspeed-coach talk said health --words "first message" --words "second message"   # one --words per message
 godspeed-coach prep-due --within-hours 48     # the coming talks with no prepared talk yet (--json too)
+godspeed-coach prep-check health --date 2026-10-18   # is that talk's preparation ready? (--json too)
 godspeed-coach talk open health --from-prep coach/health/prep/2026-10-18.md   # open from a prepared talk
 godspeed-coach config show                    # time zone, language, habit check time, cap
 

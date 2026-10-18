@@ -305,3 +305,40 @@ test("the recipe: a prepared talk opens as written, and the talk goes on like tw
   assert.doesNotMatch(continuing, /Answer like a person across the table/);
   assert.doesNotMatch(text, /[–—]/, "no long dash in the recipe");
 });
+
+// 0.4.3: the job that prepares each talk the day before (in Godspeed Mission Control, mc-coach-prep
+// with the coach-prep recipe) asks the coach about one talk after it ran: is the file ready to open
+// the talk, and is it fresh? A person can ask the same. It only reads.
+test("prep-check says whether one talk's preparation can open it, and whether it is stale", () => {
+  const at = "2026-10-20T08:00:00Z";
+  const check = (files, ...args) => cli(mission(files), at, "prep-check", "work", ...args);
+  const none = check({}, "--date", "2026-10-21");
+  assert.equal(none.code, 1);
+  assert.equal(none.out, "not ready: coach/work/prep/2026-10-21.md: there is no such file");
+  assert.deepEqual(JSON.parse(check({}, "--date", "2026-10-21", "--json").out), {
+    area: "work", title: "Work and money", date: "2026-10-21", time: "19:00", timezone: "Europe/Berlin", file: "coach/work/prep/2026-10-21.md",
+    talk_day: true, ready: false, problem: "there is no such file", stale: false, prepared: "",
+  });
+  // Ready and fresh; the day is the talk's next one when no --date is given.
+  const fresh = check({ "coach/work/prep/2026-10-21.md": prep({ prepared: "2026-10-20T11:00:00Z" }) });
+  assert.equal(fresh.code, 0, fresh.err);
+  assert.equal(fresh.out, "ready: coach/work/prep/2026-10-21.md, prepared 2026-10-20 13:00");
+  // Ready, but written more than 48 hours before the talk.
+  const stale = check({ "coach/work/prep/2026-10-21.md": prep({ prepared: "2026-10-18T17:00:00Z" }) }, "--date", "2026-10-21", "--json");
+  assert.equal(stale.code, 0);
+  assert.deepEqual([JSON.parse(stale.out).ready, JSON.parse(stale.out).stale, JSON.parse(stale.out).prepared], [true, true, "2026-10-18T17:00:00Z"]);
+  assert.match(check({ "coach/work/prep/2026-10-21.md": prep({ prepared: "2026-10-18T17:00:00Z" }) }).out, /, stale: more than 48 hours before the talk$/);
+  // A draft, or a file for another area, cannot open the talk.
+  const draft = check({ "coach/work/prep/2026-10-21.md": prep({ state: "draft" }) });
+  assert.equal(draft.code, 1);
+  assert.equal(draft.out, "not ready: coach/work/prep/2026-10-21.md: its STATE is draft, not ready");
+  assert.match(check({ "coach/work/prep/2026-10-21.md": prep({ area: "health" }) }).out, /it is for the health talk, not the Work and money talk/);
+  // A day that is not a talk day says so.
+  const thursday = JSON.parse(check({}, "--date", "2026-10-22", "--json").out);
+  assert.equal(thursday.talk_day, false);
+  assert.match(check({}, "--date", "2026-10-22").out, /\(2026-10-22 is not a day of the Work and money talk\)$/);
+  // An area with no talk has nothing to prepare.
+  const reading = cli(mission({ "coach/reading/area.md": area({ AREA: "reading", TITLE: "Reading", RHYTHM: "none" }) }), at, "prep-check", "reading");
+  assert.equal(reading.code, 1);
+  assert.match(reading.err, /The Reading area has no talk to prepare/);
+});

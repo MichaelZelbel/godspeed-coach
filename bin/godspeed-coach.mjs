@@ -15,7 +15,7 @@ import { brief, habitLine } from "../lib/brief.mjs";
 import { gate, NO_WAKE } from "../lib/gate.mjs";
 import { dueTick } from "../lib/tick.mjs";
 import { contextBlock } from "../lib/context.mjs";
-import { readPrep, prepProblem, prepDue, prepPath } from "../lib/prep.mjs";
+import { readPrep, prepProblem, prepDue, prepPath, prepCheck } from "../lib/prep.mjs";
 import { commitCoach, syncInBackground, pullQuietly } from "../lib/sync.mjs";
 import { decodeArgv, readTextFile, restoreShellEnv, startedFromGitBash, gitBashPath, LAUNCHER_ENV, CMDLINE_ENV } from "../lib/argv.mjs";
 
@@ -194,6 +194,19 @@ const commands = {
     // A stale one says when it was prepared, in the talk's own time zone.
     const when = (x) => { if (!x.prepared) return "no PREPARED time"; const p = localParts(new Date(x.prepared), x.timezone); return `prepared ${p.date} ${p.hm}`; };
     out(due.map((x) => `${x.area}: ${x.title}, ${WEEKDAY_WORDS.en[weekdayOf(x.date)]} ${x.date} at ${x.time} (${x.timezone}), prepare ${x.file}${x.stale ? ` (stale, ${when(x)})` : ""}`).join("\n") || "Nothing to prepare.", due);
+  },
+  // One talk's preparation (lib/prep.mjs, prepCheck): "ready" when it can open the talk, else why
+  // not; exit 1 when it cannot. The day is the talk's next one unless --date names another.
+  "prep-check"() {
+    const a = needArea(pos[0]);
+    if (a.noTalk || !a.rhythm) die(`The ${a.title} area has no talk to prepare.`);
+    const d = f.date ? dateArg(f.date) : nextTalkDay(a, today);
+    if (!d) die(`The ${a.title} talk has no coming day.`);
+    const r = prepCheck(mcDir, s, a, d);
+    const when = r.prepared ? (() => { const p = localParts(new Date(r.prepared), s.timezone); return `prepared ${p.date} ${p.hm}`; })() : "no PREPARED time";
+    const day = r.talk_day ? "" : ` (${d} is not a day of the ${a.title} talk)`;
+    out(r.ready ? `ready: ${r.file}, ${when}${r.stale ? ", stale: more than 48 hours before the talk" : ""}${day}` : `not ready: ${r.file}: ${r.problem}${day}`, r);
+    if (!r.ready) process.exitCode = 1;
   },
   gate() {
     pullQuietly(mcDir, syncMode);
