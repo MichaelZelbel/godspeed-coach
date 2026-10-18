@@ -7,19 +7,19 @@ import { findMissionControl, appHome } from "../lib/paths.mjs";
 import { now, localParts, addDays, weekdayOf, WEEKDAY_WORDS } from "../lib/clock.mjs";
 import { loadSettings, setSetting, DEFAULTS } from "../lib/settings.mjs";
 import { listAreas, findArea, isTalkDay, addArea, setAreaField, nextTalkDay, habitArea, AREA_FIELDS, addAreaLine, removeAreaLine } from "../lib/areas.mjs";
-import { openTalk, readTalk, setTalkState, setFollowUp, addSaid, talkDates, talkFile } from "../lib/talks.mjs";
+import { openTalk, readTalk, setTalkState, setFollowUp, addSaid, setShown, talkDates, talkFile } from "../lib/talks.mjs";
 import { addHabit, listHabits, findHabit, track, untrack, lastAnsweredDay, setStatus, stats, askedOn, answerOn,setHabitSchedule,setHabitDisplay,exemptHabitDays, setHabitReader, habitReadersWords } from "../lib/habits.mjs";
 import {habitProgress,assertDay} from '../lib/progress.mjs';
 import { readTable } from "../lib/auto.mjs";
 import { brief, habitLine } from "../lib/brief.mjs";
 import { gate, NO_WAKE } from "../lib/gate.mjs";
 import { dueTick } from "../lib/tick.mjs";
-import { contextBlock } from "../lib/context.mjs";
+import { contextBlock, waitingTalks } from "../lib/context.mjs";
 import { readPrep, prepProblem, prepDue, prepPath, prepCheck } from "../lib/prep.mjs";
 import { commitCoach, syncInBackground, pullQuietly } from "../lib/sync.mjs";
 import { decodeArgv, readTextFile, restoreShellEnv, startedFromGitBash, gitBashPath, LAUNCHER_ENV, CMDLINE_ENV } from "../lib/argv.mjs";
 
-const FLAGS = new Set(["json", "yes", "no-hermes", "no-claude", "all", "remove"]);
+const FLAGS = new Set(["json", "yes", "no-hermes", "no-claude", "all", "scheduled", "remove", "shown"]);
 // The values that name a file or folder. From Git Bash these are turned into Windows paths;
 // the person's words never are (lib/argv.mjs).
 const PATH_FLAGS = ["godspeed", "words-file", "opening-file", "prepared-file", "from-prep", "extra-skills-dir", "daily-table"];
@@ -183,7 +183,9 @@ const commands = {
     }
     die("godspeed-coach area add <name> --title ... --rhythm ... | area set <area> <SETTING> <value> | area read <area> \"<what it may look at>\" [--remove] | area limit <area> \"<what it must never do>\" [--remove]");
   },
-  brief() { const a = needArea(pos[0]); console.log(brief(mcDir, s, a, dateArg(f.date))); },
+  // Asked for in the conversation ("Can we do the health talk now?"): the open command it prints
+  // carries --shown. The scheduled talk gets its brief from the gate, without it.
+  brief() { const a = needArea(pos[0]); console.log(brief(mcDir, s, a, dateArg(f.date), { inChat: true })); },
   // For the job that prepares talks ahead (lib/prep.mjs): which coming talks still need preparing.
   // It only reads: nothing is pulled, written or sent.
   "prep-due"() {
@@ -218,7 +220,11 @@ const commands = {
     const a = needArea(name);
     if (sub === "open") {
       const d = dateArg(f.date);
-      const t = { opening: f.opening, read: f.read || "", prepared: f.prepared || "", prep: "" };
+      // --shown: the opening is the reply they are reading in the chat, so the talk never waits for it.
+      // A scheduled run never marks a talk seen (GODSPEED_SCHEDULED_RUN or --scheduled): for someone
+      // without a messenger that would hide a talk that really waits.
+      const shown = f.shown && !(f.scheduled || process.env.GODSPEED_SCHEDULED_RUN) ? at.toISOString().replace(/\.\d+Z$/, "Z") : "";
+      const t = { opening: f.opening, read: f.read || "", shown, prepared: f.prepared || "", prep: "" };
       if (f["from-prep"] !== undefined) {
         // The talk was prepared ahead (lib/prep.mjs): the opening and the talk card come from the
         // file, and the opening is printed, so the talk job's final answer is exactly that.
@@ -365,8 +371,14 @@ const commands = {
     out(hs.map((h) => habitLine(h, today)).join("\n") || "No active habits.", hs.map((h) => ({ habit: h.slug, ...stats(h, today, 7) })));
   },
   context() {
-    const c = contextBlock(mcDir, s, at);
+    // --scheduled (or GODSPEED_SCHEDULED_RUN): a routine is reading this, not a conversation with
+    // them, so a talk waiting for the chat stays waiting.
+    const scheduled = Boolean(f.scheduled || process.env.GODSPEED_SCHEDULED_RUN);
+    const waiting = waitingTalks(mcDir, s, at, { scheduled });
+    const c = contextBlock(mcDir, s, at, { scheduled });
     if (c) process.stdout.write(c + "\n");
+    for (const { area, ymd } of waiting) { try { setShown(area, ymd, at.toISOString().replace(/\.\d+Z$/, "Z")); } catch { /* shown again next turn */ } }
+    if (waiting.length) saved("talk brought up in the chat");
   },
   tick() {
     pullQuietly(mcDir, syncMode);

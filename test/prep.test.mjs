@@ -306,6 +306,21 @@ test("the recipe: a prepared talk opens as written, and the talk goes on like tw
   assert.doesNotMatch(text, /[–—]/, "no long dash in the recipe");
 });
 
+// A talk asked for in the chat is opened as seen (--shown), and without a
+// messenger a talk that waits for the chat carries its talk card after its line.
+test("in the chat: the --from-prep command ends with --shown, and a waiting talk carries its talk card", () => {
+  const mc = mission({ "coach/work/prep/2026-10-21.md": prep(), "coach/settings.json": JSON.stringify({ timezone: "Europe/Berlin", git_sync: "off", talk_delivery: "chat" }) });
+  assert.match(cli(mc, "2026-10-21T08:00:00Z", "brief", "work").out, /--from-prep "coach\/work\/prep\/2026-10-21\.md" --shown\. The opening is written/);
+  const g = gate(mc, { ...S, talk_delivery: "chat" }, new Date("2026-10-21T17:00:00Z"), path.join(fs.mkdtempSync(path.join(os.tmpdir(), "coach-gate-")), "state.json"));
+  assert.match(g.output, /--from-prep "coach\/work\/prep\/2026-10-21\.md"\. The opening is written/, "the scheduled talk's brief has no --shown");
+  assert.equal(cli(mc, "2026-10-21T17:00:00Z", "talk", "open", "work", "--from-prep", "coach/work/prep/2026-10-21.md").code, 0);
+  const block = cli(mc, "2026-10-21T17:30:00Z", "context").out.split("\n");
+  const at = block.findIndex((l) => l.startsWith("- Waiting talk: Work and money"));
+  assert.ok(at > 0, block.join("\n"));
+  assert.equal(block[at + 1], "  Talk card, prepared ahead (the short version; coach/work/prep/2026-10-21.md holds the depth):");
+  assert.equal(block[at + 2], `  ${OPENING}`);
+});
+
 // 0.4.3: the job that prepares each talk the day before (in Godspeed Mission Control, mc-coach-prep
 // with the coach-prep recipe) asks the coach about one talk after it ran: is the file ready to open
 // the talk, and is it fresh? A person can ask the same. It only reads.

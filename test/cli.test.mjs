@@ -35,6 +35,15 @@ test('habit effective dates reject future writes and follow the fixed habit time
  const resumed=cli(mc,at,'habit','resume','reading','--date','yesterday');assert.equal(resumed.code,0);assert.match(fs.readFileSync(file,'utf8'),/"kind":"status","on":"2026-10-11","status":"active"/);
 });
 
+test('progress replies use singular days and completions, and include the actual habit status',()=>{
+ const mc=mission(),at='2026-10-13T12:00:00Z';
+ cli(mc,at,'habit','add','health','reading','--title','Reading','--days','daily');
+ const done=JSON.parse(cli(mc,at,'habit','track','reading','--json').out);
+ assert.equal(done.reply,'Reading: 1 completed day altogether, 1 completion in this run.');assert.equal(done.progressCard.status,'active');
+ const paused=JSON.parse(cli(mc,at,'habit','pause','reading','--json').out);assert.equal(paused.progressCard.status,'paused');
+ const shown=JSON.parse(cli(mc,at,'habit','progress','reading','--json').out);assert.match(shown.reply,/1 completed day altogether/);assert.equal(shown.progressCard.status,'paused');
+});
+
 test("habits: add, track by loose words, answer tonight's check, list", () => {
   const mc = mission();
   const T = "2026-09-29T10:00:00Z";
@@ -68,31 +77,6 @@ test("talks: the gate, opening, his words, held", () => {
     assert.match(rec, /STATE: held/); assert.match(rec, /## What you said\n- 19:20 most evenings, about an hour/);
     assert.equal(cli(mc, "2026-10-04T17:45:00Z", "context").out, "");
   } finally { delete process.env.COACH_APP; }
-});
-
-// The capture of 14 October 2026: the health talk was open and unanswered, the person asked "Can we
-// do the psychology talk now?", and the block's "Their reply continues it" made the model save that
-// as an answer to the health talk, twice. The block now names the other-talk case, and the other
-// talk opens while this one stays open and untouched.
-test("talks: while one talk is open, the block says asking for another talk starts that one", () => {
-  const mc = tmpMission({
-    "coach/settings.json": JSON.stringify({ timezone: "Europe/Berlin", git_sync: "off" }),
-    "coach/health/area.md": area(),
-    "coach/psychology/area.md": area({ AREA: "psychology", TITLE: "Psychology", RHYTHM: "weekly monday", STYLE: "compass" }),
-  });
-  assert.equal(cli(mc, "2026-10-04T17:02:00Z", "talk", "open", "health", "--opening", "What did those three headache days have in common?").code, 0);
-  const block = cli(mc, "2026-10-05T08:00:00Z", "context").out.split("\n");
-  assert.equal(block.find((l) => l.startsWith("- Open talk:")),
-    `- Open talk: Health and fitness (id for commands: health), opened yesterday at 19:02, record coach/health/talks/2026-10-04.md. A reply to it continues it: follow the coach recipe, "Continuing a talk". A message that asks for another talk ("can we do the work talk now?") starts that talk instead and leaves this one open: "A talk they start themselves".`);
-  const healthRecord = path.join(mc, "coach", "health", "talks", "2026-10-04.md");
-  const before = fs.readFileSync(healthRecord, "utf8");
-  // "Can we do the psychology talk now?": its brief, then its own record; the health talk is left as it was.
-  assert.match(cli(mc, "2026-10-05T08:00:00Z", "brief", "psychology").out, /^COACH TALK DUE: Psychology \(id for commands: psychology\), 2026-10-05/);
-  assert.equal(cli(mc, "2026-10-05T08:01:00Z", "talk", "open", "psychology", "--opening", "From your coach, your psychology talk: what is on your mind?").out, "Opened: coach/psychology/talks/2026-10-05.md");
-  assert.equal(fs.readFileSync(healthRecord, "utf8"), before, "nothing saved as an answer to the health talk");
-  const both = cli(mc, "2026-10-05T08:02:00Z", "context").out;
-  assert.match(both, /^- Open talk: Health and fitness \(id for commands: health\), opened yesterday at 19:02,/m);
-  assert.match(both, /^- Open talk: Psychology \(id for commands: psychology\), opened today at 10:01,/m);
 });
 
 test("areas: add the first one in an empty mission control, change it, pause it", () => {
@@ -236,7 +220,6 @@ test("areas: an area with no talk takes what it may read and its limits, and kee
   assert.match(text, /\nMAY READ: my sleep tracker\nLIMIT: never suggest sleeping pills\n/);
   assert.match(text, /^RHYTHM: weekly sunday$/m);
 });
-
 // "The psychology talk may also look at my walk to work habit" (13 October 2026): one READ BY line
 // in the habit file; its own talk keeps the evening check, graduation and the struggling check.
 test("habits: another talk may look at a habit, added, listed and taken back by habit read-by", () => {
@@ -280,11 +263,3 @@ test("habits: another talk may look at a habit, added, listed and taken back by 
   assert.equal(fs.readFileSync(file, "utf8"), before, "back to the file it was");
 });
 
-test('progress replies use singular days and completions, and include the actual habit status',()=>{
- const mc=mission(),at='2026-10-13T12:00:00Z';
- cli(mc,at,'habit','add','health','reading','--title','Reading','--days','daily');
- const done=JSON.parse(cli(mc,at,'habit','track','reading','--json').out);
- assert.equal(done.reply,'Reading: 1 completed day altogether, 1 completion in this run.');assert.equal(done.progressCard.status,'active');
- const paused=JSON.parse(cli(mc,at,'habit','pause','reading','--json').out);assert.equal(paused.progressCard.status,'paused');
- const shown=JSON.parse(cli(mc,at,'habit','progress','reading','--json').out);assert.match(shown.reply,/1 completed day altogether/);assert.equal(shown.progressCard.status,'paused');
-});

@@ -134,3 +134,50 @@ test("cmd.exe started by a program (shell: true, nothing quoted): a cut line sav
   assert.equal(viaFile.status, 0, viaFile.stdout + viaFile.stderr);
   assert.ok(talk(s.mc).includes(`## The opening\n${WORDS}\n`));
 });
+
+// Without a messenger a talk waits in the chat (test/chat-talk.test.mjs), and two flags steer that:
+// --shown on a talk opened in the conversation, --scheduled on a routine's read of the block. They
+// come after a multi-line opening, so through every launcher they must arrive as well.
+const chatSandbox = () => {
+  const s = sandbox();
+  fs.writeFileSync(path.join(s.mc, "coach", "settings.json"), JSON.stringify({ timezone: "Europe/Berlin", git_sync: "off", talk_delivery: "chat" }));
+  return { ...s, env: { ...s.env, GODSPEED_SCHEDULED_RUN: "" } };
+};
+const shownOf = (mc) => (talk(mc).match(/^SHOWN: (.+)$/m) || [])[1] || "";
+
+test("without a messenger: --shown after a multi-line opening and context --scheduled arrive through every launcher", { skip: !isWin && "Windows only" }, () => {
+  // PowerShell: the opening on the command line, --shown after it.
+  for (const exe of ["powershell.exe", "pwsh.exe"].filter(found)) {
+    const s = chatSandbox();
+    const script = path.join(s.d, "call.ps1");
+    fs.writeFileSync(script, "\ufeff" + `param($Bin, $WordsFile)
+$env:PATH = "$Bin;" + $env:PATH
+$w = [IO.File]::ReadAllText($WordsFile, [Text.Encoding]::UTF8)
+godspeed-coach talk open health --opening $w --read "the table" --shown
+"open-exit:$LASTEXITCODE"
+`);
+    const r = spawnSync(exe, ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", script, "-Bin", s.bin, "-WordsFile", s.wordsFile], { encoding: "utf8", env: s.env, windowsHide: true, timeout: 120000 });
+    assert.match(r.stdout + r.stderr, /open-exit:0/, r.stdout + r.stderr);
+    assert.ok(talk(s.mc).includes(`## The opening\n${WORDS}\n`), talk(s.mc));
+    assert.match(shownOf(s.mc), /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/, `${exe}: --shown arrived`);
+  }
+  // cmd.exe: the opening from a file; a routine's read leaves the talk waiting, the person's first one shows it.
+  const c = chatSandbox();
+  const env = { ...c.env, PATH: `${c.bin};${process.env.PATH}` };
+  const opened = spawnSync("godspeed-coach", ["talk", "open", "health", "--opening-file", `"${c.wordsFile}"`, "--read", "x"], { shell: true, encoding: "utf8", env, windowsHide: true });
+  assert.equal(opened.status, 0, opened.stdout + opened.stderr);
+  const routine = spawnSync("godspeed-coach", ["context", "--scheduled"], { shell: true, encoding: "utf8", env, windowsHide: true });
+  assert.match(routine.stdout, /^- Open talk: Health and fitness/m, routine.stdout + routine.stderr);
+  assert.equal(shownOf(c.mc), "", "a routine never uses up the once");
+  const person = spawnSync("godspeed-coach", ["context"], { shell: true, encoding: "utf8", env, windowsHide: true });
+  assert.match(person.stdout, /^- Waiting talk: Health and fitness/m, person.stdout + person.stderr);
+  assert.notEqual(shownOf(c.mc), "");
+  // Git Bash: the opening from a file in Git Bash's own path form, --shown after it.
+  if (gitBash()) {
+    const g = chatSandbox();
+    const r = spawnSync(gitBash(), ["-c", 'export PATH="$(cygpath -u "$1"):$PATH"; godspeed-coach talk open health --opening-file "$(cygpath -u "$2")" --read x --shown', "call", g.bin, g.wordsFile], { encoding: "utf8", env: g.env, windowsHide: true, timeout: 120000 });
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    assert.ok(talk(g.mc).includes(`## The opening\n${WORDS}\n`));
+    assert.notEqual(shownOf(g.mc), "", "Git Bash: --shown arrived");
+  }
+});

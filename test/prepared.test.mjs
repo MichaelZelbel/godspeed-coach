@@ -190,3 +190,22 @@ test("the recipe: the research is the talk's material, things are said as what t
   assert.match(continuing, /give the best prepared thing with its date, its source and what you recommend/);
   assert.doesNotMatch(text, /—/, "no em dash in the recipe");
 });
+
+// Without a messenger a talk waits in the chat, and its line already quotes the
+// opening, so what was prepared follows it without the opening a second time.
+test("a waiting talk carries what was prepared, and its opening once", () => {
+  const mc = workMission();
+  const a = readArea(path.join(mc, "coach", "work"));
+  openTalk(a, "2026-10-15", { opening: "Will you send one?", prepared: "- 3 November: a hackathon (https://example.org/c)" }, new Date("2026-10-15T17:02:00Z"));
+  const block = contextBlock(mc, { ...S, talk_delivery: "chat" }, new Date("2026-10-15T19:00:00Z")).split("\n");
+  const at = block.findIndex((l) => l.startsWith("- Waiting talk: Work and money"));
+  assert.ok(at > 0);
+  assert.deepEqual(block.slice(at + 1, at + 6), [
+    "  Prepared, for when they ask what else there is:",
+    "  - 3 November: a hackathon (https://example.org/c)",
+    "  Everything needed to continue this talk is here: answer from it without running commands or looking things up, unless they ask for something it lacks.",
+    `  While this talk is open, a question like "what else do you have?", "what do you suggest?" or "what should I do?" is about this talk: answer from what was prepared.`,
+    "  Every answer is two sentences at most, about 300 characters, a closing question included: one that answers, and if needed one that asks or suggests.",
+  ]);
+  assert.equal(block.join("\n").split("Will you send one?").length, 2);
+});

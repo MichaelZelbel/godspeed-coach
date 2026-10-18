@@ -90,6 +90,14 @@ talk they start themselves".
    or book anything; a money talk never moves money, buys or signs up for anything; a relationships
    talk never contacts anyone for them and raises romance only when they do.
 
+## A talk waiting in the chat
+
+Without a messenger the opening reached no phone. The first time the [godspeed-coach] block shows
+it as a **waiting talk**, answer their message first, then bring the talk up in a short sentence
+or two that make sense on their own and end with its one question. Say it once; the block says so
+only in that one reply. An answer to it continues it, as above; a message that asks for a talk of
+another area does not.
+
 ## Closing a talk
 
 When a decision forms (a change, an experiment, a direction), say it back in a short sentence
@@ -176,9 +184,11 @@ missed day.
 ## A talk they start themselves
 
 "Let's do the health talk now", "Können wir über Arbeit reden?": run `godspeed-coach brief <area>`
-and follow "Opening a talk" in this conversation (skip the `[SILENT]` rule). If a talk of that area
-is already open, continue it instead. This holds while a talk of another area is open: that talk
-stays open as it is, and the request is never saved with `talk said` as an answer to it.
+and follow "Opening a talk" in this conversation (skip the `[SILENT]` rule). The open command that
+brief prints ends with `--shown`, because they read the opening right here: run it exactly as
+printed, so a later conversation does not bring the talk up again. If a talk of that area is
+already open, continue it instead. This holds while a talk of another area is open: that talk stays
+open as it is, and the request is never saved with `talk said` as an answer to it.
 
 ## A new area
 
@@ -226,11 +236,15 @@ talk that already exists or an area with no talk yet:
   `personal_operation {"type":"tracker-talk","tracker":"<its id>","talk":"<area>","words":"<their message>","expected":{"collections/<its id>":"<its hash>"}}`;
   taking it back adds `"remove":true`. Its `reply` is your answer, character for character.
 - **One of their habits** ("The psychology talk may also look at my walk to work habit", "The
-  psychology talk no longer needs my walk to work habit"):
-  `godspeed-coach habit read-by "<the habit>" <area>`; taking it back:
-  `godspeed-coach habit read-by "<the habit>" <area> --remove`. Any number of talks may look at
-  one habit. Its own talk always does, and only its own talk asks about it in the evening and
-  offers to graduate it or make it smaller; another talk only looks.
+  psychology talk no longer needs my walk to work habit"). Any number of talks may look at one
+  habit. Its own talk always does, and only its own talk asks about it in the evening and offers
+  to graduate it or make it smaller; another talk only looks. Where the notebook is connected, a
+  habit is one of its trackers, so it goes the same way as a tracker: read the trackers
+  (`personal_operation {"type":"tracker-list"}`), then
+  `personal_operation {"type":"tracker-talk","tracker":"<the habit's id>","talk":"<area>","words":"<their message>","expected":{"habits/<the habit's id>":"<its hash>"}}`;
+  taking it back adds `"remove":true`. Its `reply` is your answer, character for character.
+  Without the notebook: `godspeed-coach habit read-by "<the habit>" <area>`; taking it back:
+  `godspeed-coach habit read-by "<the habit>" <area> --remove`.
   `godspeed-coach habit read-by "<the habit>"` says which talks look at it now.
 - **Anything else it may look at** ("The health talk may also look at my running app"):
   `godspeed-coach area read <area> "<what, in their words>"`; taking it back:

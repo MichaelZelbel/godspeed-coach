@@ -43,7 +43,9 @@ something another talk raised in the last seven days.
   how to track a habit, and what never to do (a wall of text, praise, a habit you did not agree to).
 - **Two scheduled jobs in Hermes**, however many areas you have. `coach-talks` checks every 15
   minutes whether a talk is due and starts the model only then. `coach-tick` sends the evening
-  habit check and one follow-up for an unanswered talk, and never uses a model.
+  habit check and one follow-up for an unanswered talk, and never uses a model. A mission control
+  set up from the notebook's first goal has the same two under the names "Weekly check-in" and
+  "Coach reminders and habit check".
 - **A Hermes plugin and a Claude Code hook** that show the open talk and tonight's habit question
   before every turn, so your answer lands in the right place wherever you type it. An open talk
   comes with its opening and what was prepared for it, so it goes on without looking anything up.
@@ -109,7 +111,8 @@ godspeed-coach talk open health --opening-file opening.txt --prepared-file prepa
 
 ## Honest limits
 
-- The talks need your assistant on a messenger; without one, the habits still work at the desk.
+- Without a messenger, a talk still opens at its time and waits in your chat: your assistant
+  brings it up the next time you write to it. With a messenger it comes to your phone.
 - The coach never diagnoses, never tells you to see a doctor, never buys, books, pays or contacts
   anyone for you. Each area can add its own limits.
 - Five active habits at most, by design. More than that is a list, not a habit.

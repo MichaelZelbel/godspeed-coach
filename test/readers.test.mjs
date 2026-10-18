@@ -187,5 +187,6 @@ test("the recipe: asking for another talk while one is open starts that talk and
   assert.match(continuing, /A message that asks for a talk of another area \("can we do the psychology talk now\?"\) is not about the open talk: follow "A talk they start themselves"\./);
   const start = text.split("## A talk they start themselves")[1].split("## A new area")[0];
   assert.match(start, /This holds while a talk of another area is open: that talk stays open as it is, and the request is never saved with `talk said` as an answer to it\./);
+  assert.doesNotMatch(text, /Their answer continues it|Their reply continues it/);
   assert.doesNotMatch(text, /—/);
 });
