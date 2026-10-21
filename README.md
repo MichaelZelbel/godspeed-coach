@@ -140,3 +140,13 @@ npx --yes github:MichaelZelbel/godspeed-coach setup --godspeed <your mission con
 ```
 
 Tests: `npm test`, and `npm run test:hermes` for the Hermes plugin (Python 3).
+
+Areas can require verified preparation by adding repeated `RESEARCH DOMAIN: id | scope` header
+lines to `area.md`. Those preparations need `<date>.evidence.json` and `<date>.review.json`
+beside the Markdown file. The preparation runner collects successful source-page reads from the
+actual execution transcript, then runs a separate reviewer for every configured domain. The
+runtime checks both receipts against the exact preparation and area file hashes before a brief
+or `talk open --from-prep` may use it. Changing the preparation, its evidence, or the area's scope
+invalidates the review. Search snippets alone and the writer's `STATE: ready` cannot pass.
+Areas without research domains retain the earlier preparation behavior. Future preparation
+timestamps are refused for every area, with one minute allowed for clock differences.
