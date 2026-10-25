@@ -428,6 +428,31 @@ test("while items wait, one background sync stays to try again and later ones le
   assert.equal(dirty(mcDir), ""); assert.deepEqual(workItems(mcDir), []);
 });
 
+// A tick or a command that waits for its result holds the lock and gives up, and does not stay. A
+// save made meanwhile found the lock taken; its background sync stays all the same.
+test("a save made while a tick holds the lock and gives up is committed once the cause is gone, with no further save or tick", async () => {
+  const { mcDir } = repo();
+  const rebaseDir = gitPath(mcDir, "rebase-merge");
+  fs.mkdirSync(rebaseDir);
+  const o = { rebaseWaitMs: 3000, retryFirstMs: 300, retryMaxMs: 600 };
+  entry(mcDir, "tick.md");
+  const code = `import { commitCoach } from ${JSON.stringify(SYNC)}; console.log(commitCoach(${JSON.stringify(mcDir)}, "coach: tick", "commit", ${JSON.stringify(o)}));`;
+  const child = spawn(process.execPath, ["--input-type=module", "-e", code], { stdio: ["ignore", "pipe", "inherit"] });
+  let out = ""; child.stdout.on("data", (d) => { out += d; });
+  const tick = new Promise((resolve) => child.on("exit", () => resolve(out.trim())));
+  let saved;
+  try {
+    assert.ok(await until(() => fs.existsSync(lockFile(mcDir)), 30000), "the tick holds the lock, waiting the rebase out");
+    entry(mcDir, "saved.md");
+    fs.writeFileSync(path.join(itemsDir(mcDir), `${"9".repeat(15)}-saved.json`), JSON.stringify({ folder: "coach", mode: "commit", message: "coach: saved" }));
+    saved = backgroundSync(mcDir, o);
+    assert.equal(await tick, "busy", "the tick gave up and ended");
+    assert.match(dirty(mcDir), /saved.md/);
+  } finally { fs.rmSync(rebaseDir, { recursive: true }); } // the rebase is over; nobody saves, no tick runs
+  assert.ok(await until(() => dirty(mcDir) === "" && workItems(mcDir).length === 0, 30000), `still waiting: ${dirty(mcDir)}`);
+  await saved;
+});
+
 // Finding: a rebase is aborted only when it is provably the sync's own.
 test("a rebase the person starts onto the same upstream, from the same HEAD, while a sync pulls, is left alone", () => {
   const { mcDir, remote } = repo();
