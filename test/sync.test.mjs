@@ -336,6 +336,40 @@ test("a folder that does not exist is skipped, never committed as a deletion", (
   assert.match(git(mcDir, "ls-tree", "-r", "--name-only", "HEAD").stdout, /coach\/kept\.md/);
 });
 
+// A folder whose commit keeps failing (no git identity yet, git's index locked) used to cost every
+// one of its waiting items a full round of tries, so a turn grew with every save while it failed.
+test("waiting items of one folder whose commit fails cost one round of tries, not one each", () => {
+  const { mcDir } = repo();
+  fs.mkdirSync(itemsDir(mcDir), { recursive: true });
+  for (let i = 0; i < 5; i++) {
+    entry(mcDir, `e${i}.md`);
+    fs.writeFileSync(path.join(itemsDir(mcDir), `00000000000000${i}-x.json`), JSON.stringify({ folder: "coach", mode: "auto", message: "coach: x" }));
+  }
+  fs.writeFileSync(gitPath(mcDir, "index.lock"), "");
+  const trace = path.join(path.dirname(mcDir), "trace.log");
+  process.env.GIT_TRACE = trace;
+  try { assert.equal(commitCoach(mcDir, "coach: stuck", "auto", { pauses: [10, 10] }), "commit-failed"); }
+  finally { delete process.env.GIT_TRACE; }
+  const adds = fs.readFileSync(trace, "utf8").split("\n").filter((l) => /built-in: git add\b/.test(l)).length;
+  assert.equal(adds, 3, "one try and two more, for all six items together");
+  assert.equal(workItems(mcDir).length, 6, "every item still waits");
+});
+
+test("a background sync waiting to try again keeps no folder in use but the repository's", async () => {
+  const { mcDir } = repo();
+  const rebaseDir = gitPath(mcDir, "rebase-merge");
+  fs.mkdirSync(rebaseDir); // the background sync waits it out, holding the lock
+  const from = fs.mkdtempSync(path.join(os.tmpdir(), "hj-started-from-"));
+  entry(mcDir, "saved.md");
+  const code = `import { syncInBackground } from ${JSON.stringify(SYNC)}; syncInBackground(${JSON.stringify(mcDir)}, "coach: saved", "commit");`;
+  assert.equal(spawnSync(process.execPath, ["--input-type=module", "-e", code], { cwd: from }).status, 0);
+  try {
+    assert.ok(await until(() => fs.existsSync(lockFile(mcDir)), 30000), "the background sync holds the lock");
+    fs.rmSync(from, { recursive: true }); // Windows refuses while a running program has it as its folder
+  } finally { fs.rmSync(rebaseDir, { recursive: true }); } // so the sync ends, whatever happened
+  assert.ok(await until(() => dirty(mcDir) === "" && !fs.existsSync(lockFile(mcDir)), 90000));
+});
+
 // What happened on 25 October 2026, 14:35: another program had left a rebase in progress in the
 // mission control folder (it stayed for two hours). Two saves a second apart, the journal's
 // `done` and then `start`, each wrote a work item and started a background sync. Both syncs waited
