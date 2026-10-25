@@ -380,7 +380,7 @@ test("two saves whose background syncs both give up are committed by themselves 
   const { mcDir } = repo();
   const rebaseDir = gitPath(mcDir, "rebase-merge");
   fs.mkdirSync(rebaseDir);
-  const o = { rebaseWaitMs: 200, retryFirstMs: 300, retryMaxMs: 600, retryForMs: 120000 };
+  const o = { rebaseWaitMs: 200, retryFirstMs: 300, retryMaxMs: 600 };
   fs.mkdirSync(itemsDir(mcDir), { recursive: true });
   const save = (name, label) => {
     entry(mcDir, name);
@@ -398,6 +398,34 @@ test("two saves whose background syncs both give up are committed by themselves 
   const committed = git(mcDir, "log", "--name-only", "--format=", "-n", "5").stdout;
   assert.match(committed, /143518-done\.md/); assert.match(committed, /143519-start\.md/);
   await Promise.all([first, second]); // and the background syncs end once nothing waits
+});
+
+// However long items wait, one background sync stays for them, and only one: a save made while it
+// waits starts a sync that tries once, finds one staying already, and leaves.
+test("while items wait, one background sync stays to try again and later ones leave", async () => {
+  const { mcDir } = repo();
+  const rebaseDir = gitPath(mcDir, "rebase-merge");
+  fs.mkdirSync(rebaseDir);
+  const o = { rebaseWaitMs: 200, retryFirstMs: 300, retryMaxMs: 600 };
+  fs.mkdirSync(itemsDir(mcDir), { recursive: true });
+  const ended = [];
+  const save = (i) => {
+    entry(mcDir, `s${i}.md`);
+    fs.writeFileSync(path.join(itemsDir(mcDir), `00000000000000${i}-s.json`), JSON.stringify({ folder: "coach", mode: "commit", message: "coach: s" }));
+    return backgroundSync(mcDir, o).then(() => ended.push(i));
+  };
+  const syncs = [save(0)];
+  try {
+    await sleep(1500); // the first has given up once and stays
+    syncs.push(save(1));
+    assert.ok(await until(() => ended.includes(1), 30000), "a later sync leaves once it gave up");
+    syncs.push(save(2));
+    assert.ok(await until(() => ended.includes(2), 30000), "and so does the next");
+    assert.deepEqual(ended, [1, 2], "the first stays while the items wait");
+    assert.equal(workItems(mcDir).length, 3);
+  } finally { fs.rmSync(rebaseDir, { recursive: true }); }
+  await Promise.all(syncs);
+  assert.equal(dirty(mcDir), ""); assert.deepEqual(workItems(mcDir), []);
 });
 
 // Finding: a rebase is aborted only when it is provably the sync's own.
